@@ -3,88 +3,707 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Play History - {{year}}</title>
+    <title>{{year}} Unwrapped</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Instrument+Serif:ital@0;1&family=Karla:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        :root {
+            --bg-primary: #0d0d0d;
+            --bg-secondary: #1a1a1a;
+            --bg-card: #242424;
+            --accent-coral: #ff6b6b;
+            --accent-mint: #4ecdc4;
+            --accent-gold: #ffe66d;
+            --accent-lavender: #a29bfe;
+            --accent-rose: #fd79a8;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+        }
+
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding: 2rem;
-            color: #e4e4e7;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
+
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(90deg, #f472b6, #818cf8);
+            padding: 2rem;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(255, 107, 107, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(78, 205, 196, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(162, 155, 254, 0.1) 0%, transparent 60%),
+                var(--bg-primary);
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .year-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-coral), var(--accent-rose));
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero h1 {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(3rem, 12vw, 8rem);
+            font-weight: 400;
+            line-height: 1;
+            margin-bottom: 1rem;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+
+        .hero h1 span {
+            font-style: italic;
+            background: linear-gradient(135deg, var(--accent-mint), var(--accent-lavender));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .subtitle {
-            text-align: center;
-            color: #a1a1aa;
-            margin-bottom: 2rem;
-            font-size: 1.1rem;
+
+        .hero-stats {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-top: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
         }
+
+        .hero-stats strong {
+            color: var(--accent-gold);
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: bounce 2s infinite;
+        }
+
+        .scroll-hint svg {
+            width: 2rem;
+            height: 2rem;
+            stroke: var(--text-muted);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40% { transform: translateX(-50%) translateY(-10px); }
+            60% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Karla', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 3rem;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .stat-card.coral::before { background: linear-gradient(90deg, var(--accent-coral), var(--accent-rose)); }
+        .stat-card.mint::before { background: linear-gradient(90deg, var(--accent-mint), #45b7aa); }
+        .stat-card.gold::before { background: linear-gradient(90deg, var(--accent-gold), #f0d058); }
+        .stat-card.lavender::before { background: linear-gradient(90deg, var(--accent-lavender), #8b7cf7); }
+
+        .stat-label {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-subvalue {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-count {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 3rem;
+            font-weight: 700;
+            opacity: 0.1;
+        }
+
+        .stat-card.coral .stat-count { color: var(--accent-coral); }
+        .stat-card.mint .stat-count { color: var(--accent-mint); }
+        .stat-card.gold .stat-count { color: var(--accent-gold); }
+        .stat-card.lavender .stat-count { color: var(--accent-lavender); }
+
+        .duration-card {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-card), #2a2a2a);
+        }
+
+        .duration-card .stat-value {
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-coral));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .duration-card .stat-count {
+            display: none;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            padding: 2rem;
+        }
+
+        .chart-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .full-width-chart {
+            grid-column: 1 / -1;
+        }
+
+        .full-width-chart .chart-container {
+            height: 250px;
+        }
+
+        .history-section {
+            background: var(--bg-secondary);
+            padding: 5rem 2rem;
+        }
+
+        .history-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .table-wrapper {
+            background: var(--bg-card);
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
         }
+
         th, td {
-            padding: 1rem 1.25rem;
+            padding: 1rem 1.5rem;
             text-align: left;
         }
+
         th {
-            background: rgba(129, 140, 248, 0.2);
+            background: var(--bg-card);
             font-weight: 600;
             text-transform: uppercase;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             letter-spacing: 0.05em;
-            color: #c4b5fd;
+            color: var(--text-muted);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
         }
-        tr:nth-child(even) {
-            background: rgba(255, 255, 255, 0.02);
+
+        tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.2s ease;
         }
-        tr:hover {
-            background: rgba(129, 140, 248, 0.1);
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
         }
+
         td:first-child {
             font-weight: 500;
-            color: #f9fafb;
+            color: var(--text-primary);
+        }
+
+        td:nth-child(2) {
+            color: var(--accent-mint);
+        }
+
+        td:nth-child(3) {
+            color: var(--text-secondary);
+        }
+
+        td:last-child {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .table-scroll {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .table-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .table-scroll::-webkit-scrollbar-track {
+            background: var(--bg-card);
+        }
+
+        .table-scroll::-webkit-scrollbar-thumb {
+            background: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-mint);
+            text-decoration: none;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card {
+                min-width: 0;
+            }
+
+            th, td {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎵 Play History</h1>
-        <p class="subtitle">{{songCount}} songs played in {{year}}</p>
-        <table>
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Artist</th>
-                    <th>Album</th>
-                    <th>Played At</th>
-                </tr>
-            </thead>
-            <tbody>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="year-badge">Year in Review</div>
+            <h1>Your <span>{{year}}</span><br>Unwrapped</h1>
+            <p class="hero-stats">
+                You played <strong>{{songCount}}</strong> tracks this year
+            </p>
+        </div>
+        <div class="scroll-hint">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Your Top Stats</h2>
+        
+        <div class="stats-grid">
+            <div class="stat-card coral">
+                <div class="stat-label">🎵 Most Played Song</div>
+                <div class="stat-value">{{topSongTitle}}</div>
+                <div class="stat-subvalue">by {{topSongArtist}}</div>
+                <div class="stat-count">{{topSongCount}}×</div>
+            </div>
+
+            <div class="stat-card mint">
+                <div class="stat-label">🎤 Top Artist</div>
+                <div class="stat-value">{{topArtistName}}</div>
+                <div class="stat-subvalue">{{topArtistCount}} plays</div>
+                <div class="stat-count">{{topArtistCount}}</div>
+            </div>
+
+            <div class="stat-card gold">
+                <div class="stat-label">💿 Most Played Album</div>
+                <div class="stat-value">{{topAlbumTitle}}</div>
+                <div class="stat-subvalue">by {{topAlbumArtist}}</div>
+                <div class="stat-count">{{topAlbumCount}}×</div>
+            </div>
+
+            <div class="stat-card lavender" id="genre-card">
+                <div class="stat-label">🎸 Top Genre</div>
+                <div class="stat-value">{{topGenreName}}</div>
+                <div class="stat-subvalue">{{topGenreCount}} plays</div>
+                <div class="stat-count">{{topGenreCount}}</div>
+            </div>
+
+            <div class="stat-card duration-card" id="duration-card">
+                <div class="stat-label">⏱️ Total Listening Time</div>
+                <div class="stat-value">{{totalDuration}}</div>
+                <div class="stat-subvalue">of pure musical bliss</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section-title">Your Music in Charts</h2>
+        
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>🎤 Top 10 Artists</h3>
+                <div class="chart-container">
+                    <canvas id="artistsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" id="genre-chart-card">
+                <h3>🎸 Genre Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="genreChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>💿 Top 10 Albums</h3>
+                <div class="chart-container">
+                    <canvas id="albumsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card full-width-chart">
+                <h3>📅 Listening Over Time</h3>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="history-section">
+        <div class="history-container">
+            <h2 class="section-title">Complete Play History</h2>
+            <div class="table-wrapper">
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Artist</th>
+                                <th>Album</th>
+                                <th>Played At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
 {{songRows}}
-            </tbody>
-        </table>
-    </div>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>Generated with 🎵 by <a href="#">Winamp Unwrapped</a></p>
+    </footer>
+
+    <script>
+        // Chart.js configuration
+        Chart.defaults.color = '#a0a0a0';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        const chartColors = [
+            '#ff6b6b', '#4ecdc4', '#ffe66d', '#a29bfe', '#fd79a8',
+            '#74b9ff', '#55a3ff', '#00cec9', '#ffeaa7', '#dfe6e9'
+        ];
+
+        // Data from template
+        const artistLabels = {{artistLabels}};
+        const artistData = {{artistData}};
+        const genreLabels = {{genreLabels}};
+        const genreData = {{genreData}};
+        const albumLabels = {{albumLabels}};
+        const albumData = {{albumData}};
+        const monthLabels = {{monthLabels}};
+        const monthData = {{monthData}};
+        const hasGenre = {{hasGenre}};
+        const hasDuration = {{hasDuration}};
+
+        // Hide genre elements if no genre data
+        if (!hasGenre) {
+            document.getElementById('genre-card')?.classList.add('hidden');
+            document.getElementById('genre-chart-card')?.classList.add('hidden');
+        }
+
+        // Hide duration card if no duration data
+        if (!hasDuration) {
+            document.getElementById('duration-card')?.classList.add('hidden');
+        }
+
+        // Top Artists Bar Chart
+        new Chart(document.getElementById('artistsChart'), {
+            type: 'bar',
+            data: {
+                labels: artistLabels,
+                datasets: [{
+                    data: artistData,
+                    backgroundColor: chartColors,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11 },
+                            callback: function(value) {
+                                const label = this.getLabelForValue(value);
+                                return label.length > 20 ? label.substr(0, 20) + '...' : label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Genre Doughnut Chart
+        if (hasGenre && genreLabels.length > 0) {
+            new Chart(document.getElementById('genreChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: genreLabels,
+                    datasets: [{
+                        data: genreData,
+                        backgroundColor: chartColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 15,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: { size: 11 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Top Albums Bar Chart
+        new Chart(document.getElementById('albumsChart'), {
+            type: 'bar',
+            data: {
+                labels: albumLabels,
+                datasets: [{
+                    data: albumData,
+                    backgroundColor: chartColors.slice().reverse(),
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { display: false }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11 },
+                            callback: function(value) {
+                                const label = this.getLabelForValue(value);
+                                return label.length > 20 ? label.substr(0, 20) + '...' : label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Monthly Listening Area Chart
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthLabels.map(m => {
+                    const [year, month] = m.split('-');
+                    return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short' });
+                }),
+                datasets: [{
+                    data: monthData,
+                    fill: true,
+                    backgroundColor: 'rgba(78, 205, 196, 0.2)',
+                    borderColor: '#4ecdc4',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4ecdc4',
+                    pointBorderColor: '#0d0d0d',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value + ' plays';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
