@@ -4,7 +4,7 @@ Winamp Unwrapped is a command-line tool that reads the nowplaying.db file from w
 
 ![screenshot showing summary info](resources/screenshot-1.png)
 
-![screenshot showing chart breakdown](resources/screenshot-1.png)
+![screenshot showing chart breakdown](resources/screenshot-2.png)
 
 ## Compiling
 
