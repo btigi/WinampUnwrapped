@@ -4,8 +4,8 @@ using Microsoft.Extensions.Configuration;
 
 if (args.Length == 0)
 {
-    Console.WriteLine("Usage: PlayHistoryReport <year>");
-    Console.WriteLine("Example: PlayHistoryReport 2025");
+    Console.WriteLine("Usage: WinampUnwrapped <year>");
+    Console.WriteLine("Example: WinampUnwrapped 2025");
     return 1;
 }
 
@@ -41,6 +41,10 @@ if (!File.Exists(fullTemplatePath))
     return 1;
 }
 
+var excludeBlankAlbum = bool.Parse(configuration["ExcludeBlankAlbum"] ?? "true");
+var excludeBlankSong = bool.Parse(configuration["ExcludeBlankSong"] ?? "true");
+var excludeBlankArtist = bool.Parse(configuration["ExcludeBlankArtist"] ?? "true");
+
 var template = File.ReadAllText(fullTemplatePath);
 
 var songs = new List<SongInfo>();
@@ -61,11 +65,18 @@ using (var connection = new SqliteConnection($"Data Source={databasePath}"))
     using var reader = command.ExecuteReader();
     while (reader.Read())
     {
+        var originalTitle = reader.IsDBNull(0) ? null : reader.GetString(0);
+        var originalArtist = reader.IsDBNull(1) ? null : reader.GetString(1);
+        var originalAlbum = reader.IsDBNull(2) ? null : reader.GetString(2);
+        
         songs.Add(new SongInfo
         {
-            Title = reader.IsDBNull(0) ? "Unknown Title" : reader.GetString(0),
-            Artist = reader.IsDBNull(1) ? "Unknown Artist" : reader.GetString(1),
-            Album = reader.IsDBNull(2) ? "Unknown Album" : reader.GetString(2),
+            Title = string.IsNullOrEmpty(originalTitle) ? "Unknown Title" : originalTitle,
+            Artist = string.IsNullOrEmpty(originalArtist) ? "Unknown Artist" : originalArtist,
+            Album = string.IsNullOrEmpty(originalAlbum) ? "Unknown Album" : originalAlbum,
+            OriginalTitle = originalTitle ?? "",
+            OriginalArtist = originalArtist ?? "",
+            OriginalAlbum = originalAlbum ?? "",
             PlayedAt = reader.IsDBNull(3) ? "" : reader.GetString(3),
             DurationMs = reader.IsDBNull(4) ? 0 : reader.GetInt32(4),
             Genre = reader.IsDBNull(5) ? "" : reader.GetString(5)
@@ -79,7 +90,7 @@ if (songs.Count == 0)
     return 0;
 }
 
-var stats = CalculateStats(songs);
+var stats = CalculateStats(songs, excludeBlankAlbum, excludeBlankSong, excludeBlankArtist);
 
 var outputFile = $"PlayHistory_{year}.html";
 var html = GenerateHtml(template, year, songs, stats);
@@ -88,21 +99,33 @@ File.WriteAllText(outputFile, html);
 Console.WriteLine($"Generated {outputFile} with {songs.Count} songs");
 return 0;
 
-static Stats CalculateStats(List<SongInfo> songs)
+static Stats CalculateStats(List<SongInfo> songs, bool excludeBlankAlbum, bool excludeBlankSong, bool excludeBlankArtist)
 {
-    var topSong = songs
+    var songsForTopSong = excludeBlankSong 
+        ? songs.Where(s => !string.IsNullOrEmpty(s.OriginalTitle)).ToList()
+        : songs;
+
+    var topSong = songsForTopSong
         .GroupBy(s => new { s.Title, s.Artist })
         .OrderByDescending(g => g.Count())
         .Select(g => new TopItem { Name = g.Key.Title, SubName = g.Key.Artist, Count = g.Count() })
         .FirstOrDefault() ?? new TopItem { Name = "N/A", SubName = "", Count = 0 };
 
-    var topArtist = songs
+    var songsForTopArtist = excludeBlankArtist 
+        ? songs.Where(s => !string.IsNullOrEmpty(s.OriginalArtist)).ToList()
+        : songs;
+
+    var topArtist = songsForTopArtist
         .GroupBy(s => s.Artist)
         .OrderByDescending(g => g.Count())
         .Select(g => new TopItem { Name = g.Key, Count = g.Count() })
         .FirstOrDefault() ?? new TopItem { Name = "N/A", Count = 0 };
 
-    var topAlbum = songs
+    var songsForTopAlbum = excludeBlankAlbum 
+        ? songs.Where(s => !string.IsNullOrEmpty(s.OriginalAlbum)).ToList()
+        : songs;
+
+    var topAlbum = songsForTopAlbum
         .GroupBy(s => new { s.Album, s.Artist })
         .OrderByDescending(g => g.Count())
         .Select(g => new TopItem { Name = g.Key.Album, SubName = g.Key.Artist, Count = g.Count() })
@@ -119,7 +142,7 @@ static Stats CalculateStats(List<SongInfo> songs)
     var totalHours = totalMs / 3600000.0;
     var totalDays = totalHours / 24.0;
 
-    var topArtists = songs
+    var topArtists = songsForTopArtist
         .GroupBy(s => s.Artist)
         .OrderByDescending(g => g.Count())
         .Take(10)
@@ -134,7 +157,7 @@ static Stats CalculateStats(List<SongInfo> songs)
         .Select(g => new ChartItem { Label = g.Key, Value = g.Count() })
         .ToList();
 
-    var topAlbums = songs
+    var topAlbums = songsForTopAlbum
         .GroupBy(s => s.Album)
         .OrderByDescending(g => g.Count())
         .Take(10)
@@ -231,6 +254,9 @@ record SongInfo
     public string Title { get; init; } = "";
     public string Artist { get; init; } = "";
     public string Album { get; init; } = "";
+    public string OriginalTitle { get; init; } = "";
+    public string OriginalArtist { get; init; } = "";
+    public string OriginalAlbum { get; init; } = "";
     public string PlayedAt { get; init; } = "";
     public int DurationMs { get; init; } = 0;
     public string Genre { get; init; } = "";
